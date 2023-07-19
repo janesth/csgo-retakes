@@ -674,7 +674,18 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
         }
 
         if (winner == CS_TEAM_T) {
-            TerroristsWon();
+            char playerName[64];
+            ArrayList tWinners = new ArrayList();
+            for (int client = 1; client <= MaxClients; client++) {
+                if (IsPlayer(client)) {
+                    if (GetClientTeam(client) == CS_TEAM_T) {
+                        GetClientName(client, playerName, 64);
+                        tWinners.Push(playerName);
+                    }
+                }
+            }
+            TerroristsWon(tWinners);
+            delete tWinners;
         } else if (winner == CS_TEAM_CT) {
             CounterTerroristsWon();
         }
@@ -877,13 +888,14 @@ static bool ScramblesEnabled() {
     return g_hRoundsToScramble.IntValue >= 1;
 }
 
-public void TerroristsWon() {
+public void TerroristsWon(ArrayList tWinners) {
     int toScramble = g_hRoundsToScramble.IntValue;
     g_WinStreak++;
 
     if (g_WinStreak >= toScramble) {
         if (ScramblesEnabled()) {
             g_ScrambleSignal = true;
+            //use tWinners for Retakes_MessageToAll() and new translation property
             Retakes_MessageToAll("%t", "ScrambleMessage", g_WinStreak);
         }
         g_WinStreak = 0;
